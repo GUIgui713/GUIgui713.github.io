@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>电子祭奠功德系统</title>
+    <style>
+        /* 可编辑标题 */
+        #ancestor-title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: #ffd700;
+            padding: 10px 20px;
+            border: 2px solid transparent;
+            cursor: text;
+            max-width: 80%;
+            text-align: center;
+            font-family: 'Microsoft YaHei';
+            z-index: 999;
+        }
+        #ancestor-title:hover {
+            border-color: #5a3e2b;
+        }
+        #ancestor-title:focus {
+            outline: none;
+            border-color: #8b5e34;
+        }
+
+        body {
+            background: #2c1a0f;
+            color: #e6d5a8;
+            font-family: 'Microsoft YaHei';
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            display: flex;
+            max-width: 1200px;
+            gap: 20px;
+            margin-top: 80px;
+        }
+        .panel {
+            width: 280px;
+            padding: 20px;
+            border: 2px solid #5a3e2b;
+            background: #3a281d;
+        }
+        #wheel-container {
+            position: relative;
+            width: 500px;
+            margin: 0 20px;
+        }
+        #wheel {
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            border: 3px solid #8b5e34;
+            transition: transform 3s ease-out;
+        }
+        .pointer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 40px;
+            background: red;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            transform: translate(-50%, -70%);
+            z-index: 1;
+        }
+        button {
+            background: #8b5e34;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        .rank {
+            margin: 10px 0;
+            padding: 8px;
+            background: #4a372c;
+        }
+        h3 {
+            color: #e6d5a8;
+            border-bottom: 2px solid #5a3e2b;
+            padding-bottom: 8px;
+        }
+        .exchange-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .cut-btn {
+            background: #5a3e2b;
+            padding: 5px 10px;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 100;
+        }
+        #score-list li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 可编辑祖先标题 -->
+    <div id="ancestor-title" contenteditable="true">祭奠先祖：王氏列祖列宗</div>
+
+    <div class="container">
+        <div class="panel">
+            <h3>上贡记录</h3>
+            <ul id="record"></ul>
+            
+            <h3 style="margin-top:20px">贡品积分</h3>
+            <ul id="score-list">
+                <li>黄焖鸡 → 1000分</li>
+                <li>柠檬水 → 700分</li>
+                <li>上香 → 500分</li>
+                <li>蜡烛 → 400分</li>
+                <li>QB → 300分</li>
+                <li>一元纸钱 → 2分</li>
+                <li>一亿纸钱 → 1分</li>
+            </ul>
+        </div>
+
+        <div id="wheel-container">
+            <div class="pointer"></div>
+            <canvas id="wheel" width="500" height="500"></canvas>
+            <div style="text-align:center;margin:10px">
+                <h2 style="color:#ffd700">★子孙贡盘★</h2>
+                <button id="spinBtn">开始祭拜（剩余次数：5）</button><br>
+                <button onclick="addChance()">分享好友+1次</button>
+                <p>当前积分：<span id="score">0</span>分</p>
+                <p style="font-size:12px;color:#888">* 每日凌晨重置次数</p>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>微信功德榜</h3>
+            <div class="rank">1. AAA建材王哥 34570分</div>
+            <div class="rank">2. 薄冰哥 23456分</div>
+            <div class="rank">3. 妮妮酱（全国可飞）18888分</div>
+            <div class="rank">4. 不吃香菜 7878分</div>
+            <div class="rank">5. 小熊软糖 3分</div>
+            
+            <h3 style="margin-top:20px">积分兑换</h3>
+            <div class="exchange-item">
+                <div>
+                    <button onclick="exchange(10000)">实现愿望（<span id="d1">10000</span>分）</button>
+                </div>
+                <button class="cut-btn" onclick="handleCut('d1', 10000)">砍一刀</button>
+            </div>
+            <div class="exchange-item">
+                <div>
+                    <button onclick="exchange(8888)">子孙财运（<span id="d2">8888</span>分）</button>
+                </div>
+                <button class="cut-btn" onclick="handleCut('d2', 8888)">砍一刀</button>
+            </div>
+            <div class="exchange-item">
+                <div>
+                    <button onclick="exchange(2222)">求姻缘（<span id="d3">2222</span>分）</button>
+                </div>
+                <button class="cut-btn" onclick="handleCut('d3', 2222)">砍一刀</button>
+            </div>
+            <div class="exchange-item">
+                <div>
+                    <button onclick="exchange(500)">清北保送（<span id="d4">500</span>分）</button>
+                </div>
+                <button class="cut-btn" onclick="handleCut('d4', 500)">砍一刀</button>
+            </div>
+            <div class="exchange-item">
+                <div>
+                    <button onclick="exchange(1)">全家健康（<span id="d5">1</span>分）</button>
+                </div>
+                <button class="cut-btn" onclick="handleCut('d5', 1)">砍一刀</button>
+            </div>
+            <div class="toast" id="toast"></div>
+        </div>
+    </div>
+
+<script>
+const items = [
+    {name:"上香", color:"#8B4513", prob:20, score:500},
+    {name:"点蜡烛", color:"#FFD700", prob:10, score:400},
+    {name:"一元纸钱", color:"#808080", prob:10, score:2},
+    {name:"一亿纸钱", color:"#FFFF00", prob:5, score:1},
+    {name:"烧QB", color:"#FF4500", prob:15, score:300},
+    {name:"上贡柠檬水", color:"#7FFF00", prob:15, score:700},
+    {name:"上贡黄焖鸡", color:"#CD8500", prob:25, score:1000}
+];
+
+let data = JSON.parse(localStorage.getItem('data')) || {
+    records: {},
+    score: 0,
+    chances: 5,
+    lastDate: new Date().toDateString(),
+    title: "祭奠先祖：王氏列祖列宗"
+};
+
+let discounts = JSON.parse(localStorage.getItem('discounts')) || {
+    d1: 1, d2: 1, d3: 1, d4: 1, d5: 1
+};
+
+// 初始化标题
+const titleElement = document.getElementById('ancestor-title');
+titleElement.textContent = data.title;
+
+// 监听标题修改
+titleElement.addEventListener('input', () => {
+    data.title = titleElement.textContent;
+    saveData();
+});
+
+const canvas = document.getElementById('wheel');
+const ctx = canvas.getContext('2d');
+drawWheel();
+
+document.getElementById('spinBtn').addEventListener('click', spin);
+updateDisplay();
+updateDiscountDisplay();
+
+function drawWheel() {
+    ctx.clearRect(0, 0, 500, 500);
+    let startAngle = 0;
+    items.forEach(item => {
+        const sliceAngle = (2 * Math.PI) * (item.prob / 100);
+        ctx.beginPath();
+        ctx.arc(250, 250, 250, startAngle, startAngle + sliceAngle);
+        ctx.lineTo(250, 250);
+        ctx.fillStyle = item.color;
+        ctx.fill();
+        
+        ctx.save();
+        ctx.translate(250, 250);
+        ctx.rotate(startAngle + sliceAngle/2);
+        ctx.fillStyle = "black";
+        ctx.font = "18px Microsoft YaHei";
+        ctx.textAlign = "right";
+        ctx.fillText(item.name, 230, 10);
+        ctx.restore();
+        
+        startAngle += sliceAngle;
+    });
+}
+
+function spin() {
+    if (data.chances <= 0) return alert("今日次数已用尽！");
+    if (data.lastDate !== new Date().toDateString()) {
+        data.chances = 5;
+        data.lastDate = new Date().toDateString();
+    }
+    
+    const random = Math.random() * 100;
+    let acc = 0;
+    let result = items.find(item => {
+        acc += item.prob;
+        return random <= acc;
+    });
+
+    data.chances--;
+    data.score += result.score;
+    data.records[result.name] = (data.records[result.name] || 0) + 1;
+    
+    const targetRotation = (360 * 5) + (acc * 3.6) - 90;
+    canvas.style.transform = `rotate(${targetRotation}deg)`;
+    
+    setTimeout(() => {
+        alert(`获得：${result.name} (+${result.score}分)`);
+        saveData();
+        updateDisplay();
+    }, 3000);
+}
+
+function updateDisplay() {
+    const recordList = document.getElementById('record');
+    recordList.innerHTML = items.map(item => 
+        `<li>${item.name}：${data.records[item.name] || 0}次</li>`
+    ).join('');
+    
+    document.getElementById('score').textContent = data.score;
+    document.getElementById('spinBtn').innerHTML = 
+        `开始祭拜（剩余次数：${data.chances}）`;
+}
+
+function addChance() {
+    navigator.clipboard.writeText("快来帮我祭拜赚功德！");
+    showToast("已复制分享口令到剪贴板");
+    
+    setTimeout(() => {
+        data.chances++;
+        saveData();
+        updateDisplay();
+        showToast("好友分享成功，次数+1！");
+    }, 2000);
+}
+
+function handleCut(targetId, originalScore) {
+    navigator.clipboard.writeText("快来帮我砍功德！");
+    showToast("已复制助力口令到剪贴板");
+    
+    setTimeout(() => {
+        const discount = Math.max(0.1, Math.random().toFixed(2));
+        discounts[targetId] = discount;
+        const newScore = Math.ceil(originalScore * discount);
+        
+        document.getElementById(targetId).textContent = newScore;
+        showToast(`好友助力成功！折扣已降至${(discount*10).toFixed(1)}折！`);
+        localStorage.setItem('discounts', JSON.stringify(discounts));
+    }, 2000);
+}
+
+function exchange(originalScore) {
+    const actualScore = Math.ceil(originalScore * Math.min(...Object.values(discounts)));
+    
+    if (data.score >= actualScore) {
+        data.score -= actualScore;
+        saveData();
+        updateDisplay();
+        alert(`兑换成功，消耗${actualScore}分！`);
+        Object.keys(discounts).forEach(k => discounts[k] = 1);
+        localStorage.setItem('discounts', JSON.stringify(discounts));
+        updateDiscountDisplay();
+    } else {
+        alert("积分不足！");
+    }
+}
+
+function showToast(text) {
+    const toast = document.getElementById('toast');
+    toast.textContent = text;
+    toast.style.display = 'block';
+    setTimeout(() => toast.style.display = 'none', 2000);
+}
+
+function updateDiscountDisplay() {
+    document.querySelectorAll('[id^="d"]').forEach(span => {
+        const original = parseInt(span.textContent) / discounts[span.id];
+        span.textContent = Math.ceil(original);
+    });
+}
+
+function saveData() {
+    data.title = titleElement.textContent;
+    localStorage.setItem('data', JSON.stringify(data));
+}
+
+setInterval(() => {
+    if (new Date().getHours() === 0) {
+        data.chances = 5;
+        data.lastDate = new Date().toDateString();
+        saveData();
+        updateDisplay();
+    }
+}, 60000);
+</script>
+</body>
+</html>
